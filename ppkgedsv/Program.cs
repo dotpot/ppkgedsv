@@ -1,5 +1,8 @@
 ﻿/// <summary>
-/// Demo C# application for Private/Public RSA Key Generation. Encryption/Decryption and Signing/Verification for messages using those keys.
+/// Demo C# application for: 
+/// 	- Private/Public RSA Key Generation. Encryption/Decryption and Signing/Verification for messages using those keys.
+///     - X509 Certificate generation.
+/// 	- PDF document signing.
 /// </summary>
 using System;
 using System.Collections.Generic;
@@ -7,6 +10,7 @@ using System.IO;
 using System.Security;
 using System.Security.Cryptography;
 using System.Text;
+using System.Security.Cryptography.X509Certificates;
 
 namespace ppkgedsv
 {
@@ -60,15 +64,18 @@ namespace ppkgedsv
 			Print ("======= X509 Certificate (self signed) =======");
 			Print ("Enter subject name:");
 			var subjectName = Console.ReadLine ();
-//
-			var caPrivKey = X509.GenerateCACertificate("CN=root ca");
-			var cert = X509.GenerateSelfSignedCertificate(String.Format("CN={0}", subjectName), "CN=root ca", caPrivKey);
-//
+
+			var caPrivKey = X509.GenerateCACertificate("CN=TEST Root CA");
+			var cert = X509.GenerateSelfSignedCertificate(String.Format("CN={0}", subjectName), "CN=TEST Root CA", caPrivKey);
+
+			byte[] certData = cert.Export(X509ContentType.Cert, psw);
+			File.WriteAllBytes(String.Format("{0}Certificate.pfx", subjectName), certData);
+
 			Print (String.Format("{0}", cert.ToString()));
-//
-//
-//			var xx = PDFFile.SignPDF (cert, "xuilo.pdf", "xuilo_signed.pdf");
-//			Print (xx);
+
+			PDFFile.SignPDF (cert, "document.pdf", "document_signed.pdf");
+
+			Print ("all done.");
 
 			Console.WriteLine("<< Hit [any key] to quit. >>");
 			Console.ReadKey();
