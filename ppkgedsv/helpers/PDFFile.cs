@@ -20,7 +20,7 @@ namespace ppkgedsv
 				using (PdfStamper stamper = PdfStamper.CreateSignature(reader, fout, '\0'))
 				{
 					// digital signature
-					var pk=Org.BouncyCastle.Security.DotNetUtilities.GetKeyPair(signature.PrivateKey).Private;
+					var pk = Org.BouncyCastle.Security.DotNetUtilities.GetKeyPair(signature.PrivateKey).Private;
 					IExternalSignature es = new PrivateKeySignature(pk, "SHA-256");
 
 					Org.BouncyCastle.X509.X509CertificateParser cp = new Org.BouncyCastle.X509.X509CertificateParser();

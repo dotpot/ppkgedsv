@@ -7,7 +7,6 @@ using Org.BouncyCastle.Math;
 using Org.BouncyCastle.Pkcs;
 using Org.BouncyCastle.Asn1;
 using Org.BouncyCastle.OpenSsl;
-//using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Prng;
 using Org.BouncyCastle.Asn1.X509;
 using Org.BouncyCastle.Crypto.Generators;
@@ -66,7 +65,6 @@ namespace ppkgedsv
 			// correcponding private key
 			PrivateKeyInfo info = PrivateKeyInfoFactory.CreatePrivateKeyInfo(subjectKeyPair.Private);
 
-
 			// merge into X509Certificate2
 			var x509 = new System.Security.Cryptography.X509Certificates.X509Certificate2(certificate.GetEncoded());
 
@@ -105,6 +103,7 @@ namespace ppkgedsv
 			var issuerDN = subjectDN;
 			certificateGenerator.SetIssuerDN(issuerDN);
 			certificateGenerator.SetSubjectDN(subjectDN);
+            
 
 			// Valid For
 			var notBefore = DateTime.UtcNow.Date;
@@ -127,10 +126,10 @@ namespace ppkgedsv
 
 			// selfsign certificate
 			var certificate = certificateGenerator.Generate(issuerKeyPair.Private, random);
-			//var x509 = new System.Security.Cryptography.X509Certificates.X509Certificate2(certificate.GetEncoded());
+			var x509 = new System.Security.Cryptography.X509Certificates.X509Certificate2(certificate.GetEncoded());
 
 			// Add CA certificate to Root store
-			// addCertToStore(cert, StoreName.Root, StoreLocation.CurrentUser);
+            addCertToStore(x509, StoreName.Root, StoreLocation.CurrentUser);
 
 			return issuerKeyPair.Private;
 
@@ -145,7 +144,7 @@ namespace ppkgedsv
 				X509Store store = new X509Store(st, sl);
 				store.Open(OpenFlags.ReadWrite);
 				store.Add(cert);
-
+                
 				store.Close();
 			}
 			catch

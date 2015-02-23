@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using System.Security;
 using System.Text;
 
@@ -30,35 +31,30 @@ namespace ppkgedsv
 			cspParams = new CspParameters();
 			SecureString keyPassword = new SecureString();
 
-			//* PROV_RSA_FULL https://msdn.microsoft.com/en-us/library/system.security.cryptography.cspparameters.providertype(v=vs.110).aspx
-			cspParams.ProviderType = 1; 
-			cspParams.ProviderName = "";
+            cspParams.ProviderType = 1;
+            cspParams.KeyContainerName = "DummyContainer";
+            //cspParams.ProviderName = "";
 
 			//* Convert password into secure string.
 			foreach (char c in password) {
 				keyPassword.AppendChar(c);
 			}
 
-			cspParams.KeyPassword = keyPassword;
-			cspParams.Flags = CspProviderFlags.UseArchivableKey;
-			cspParams.KeyNumber = (int)KeyNumber.Exchange;
-
+            cspParams.KeyPassword = keyPassword;
+            //cspParams.Flags = CspProviderFlags.UseArchivableKey | CspProviderFlags.NoFlags;
+            cspParams.KeyNumber = (int)KeyNumber.Signature;
+            
 			using (var rsaProvider = new RSACryptoServiceProvider(keySize, cspParams)) {
 				try {
-					//* Dispose key psw.
-					keyPassword.Dispose();
-
-					//* Export public key
 					publicKey = rsaProvider.ToXmlString(false);
-
-					//* Export private/public key pair 
 					privateKey = rsaProvider.ToXmlString(true);
 				} catch (Exception ex) {
 					Print (String.Format("[GENERATING KEYS] Exception: {0}", ex.Message));
 				}
 				finally {
 					rsaProvider.PersistKeyInCsp = false;
-					rsaProvider.Clear();
+                    rsaProvider.Dispose();
+                    keyPassword.Dispose();
 				}
 			}
 
@@ -68,11 +64,8 @@ namespace ppkgedsv
 		public static string Sign(string message, string privateKey)
 		{
 			byte[] signedBytes = null;
-			CspParameters cspParams = new CspParameters();
-			cspParams.ProviderType = 1;
-			cspParams.ProviderName = "";
 
-			using (var rsaProvider = new RSACryptoServiceProvider(cspParams))
+			using (var rsaProvider = new RSACryptoServiceProvider())
 			{
 				byte[] originalData = new UTF8Encoding().GetBytes(message);
 
@@ -88,6 +81,7 @@ namespace ppkgedsv
 				finally
 				{
 					rsaProvider.PersistKeyInCsp = false;
+                    rsaProvider.Dispose();
 				}
 			}
 
@@ -97,11 +91,8 @@ namespace ppkgedsv
 		public static bool Verify(string originalMessage, string signedMessage, string publicKey)
 		{
 			bool success = false;
-			CspParameters cspParams = new CspParameters();
-			cspParams.ProviderType = 1;
-			cspParams.ProviderName = "";
 
-			using (var rsaProvider = new RSACryptoServiceProvider(cspParams))
+			using (var rsaProvider = new RSACryptoServiceProvider())
 			{
 				byte[] bytesToVerify = new UTF8Encoding().GetBytes(originalMessage);
 				byte[] signedBytes = Convert.FromBase64String(signedMessage);
@@ -117,6 +108,7 @@ namespace ppkgedsv
 				finally
 				{
 					rsaProvider.PersistKeyInCsp = false;
+                    rsaProvider.Dispose();
 				}
 			}
 
@@ -129,11 +121,7 @@ namespace ppkgedsv
 			byte[] encryptedBytes = null;
 			string encryptedText = "";
 
-			CspParameters cspParams = new CspParameters();
-			cspParams.ProviderType = 1;
-			cspParams.ProviderName = "";
-
-			using (var rsaProvider = new RSACryptoServiceProvider(cspParams)) {
+			using (var rsaProvider = new RSACryptoServiceProvider()) {
 				try {
 					rsaProvider.FromXmlString(publicKey);
 
@@ -146,6 +134,7 @@ namespace ppkgedsv
 				}
 				finally {
 					rsaProvider.PersistKeyInCsp = false;
+                    rsaProvider.Dispose();
 				}
 			}
 
@@ -158,10 +147,7 @@ namespace ppkgedsv
 			string decryptedText = "";
 			byte[] plainBytes = null;
 
-			cspParams = new CspParameters ();
-			cspParams.ProviderType = 1; 
-			cspParams.ProviderName = "";
-			using (var rsaProvider = new RSACryptoServiceProvider (cspParams)) {
+			using (var rsaProvider = new RSACryptoServiceProvider ()) {
 				try {
 					rsaProvider.FromXmlString (privateKey);
 
@@ -172,6 +158,7 @@ namespace ppkgedsv
 					Print (String.Format("[DECRYPT] Exception: {0}", ex.Message));
 				} finally {
 					rsaProvider.PersistKeyInCsp = false;
+                    rsaProvider.Dispose();
 				}
 			}
 
