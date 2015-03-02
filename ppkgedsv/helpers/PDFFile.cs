@@ -41,6 +41,38 @@ namespace ppkgedsv
 
 			return true;
 		}
+
+        public static byte[] SignPDFBytes(X509Certificate2 signatureCert, byte[] pdf)
+        {
+            byte[] result;
+            MemoryStream ms = new MemoryStream();
+
+            PdfReader reader = new PdfReader(pdf);
+            using (PdfStamper signer = PdfStamper.CreateSignature(reader, ms, '\0'))
+            {
+                // digital signature
+                var pk = Org.BouncyCastle.Security.DotNetUtilities.GetKeyPair(signatureCert.PrivateKey).Private;
+                IExternalSignature es = new PrivateKeySignature(pk, "SHA-256");
+
+                Org.BouncyCastle.X509.X509CertificateParser cp = new Org.BouncyCastle.X509.X509CertificateParser();
+                Org.BouncyCastle.X509.X509Certificate[] chain = new[] { cp.ReadCertificate(signatureCert.RawData) };
+
+                try
+                {
+                    MakeSignature.SignDetached(signer.SignatureAppearance, es, chain, null, null, null, 0, CryptoStandard.CMS);
+
+                    result = ms.ToArray();
+                }
+                catch (CryptographicException ex)
+                {
+                    throw;
+                }
+
+                signer.Close();
+            }
+
+            return result;
+        }
 	}
 }
 

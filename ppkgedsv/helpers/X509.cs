@@ -46,7 +46,7 @@ namespace ppkgedsv
 
 			certificateGenerator.SetNotBefore(notBefore);
 			certificateGenerator.SetNotAfter(notAfter);
-
+            
 			// Subject Public Key
 			Org.BouncyCastle.Crypto.AsymmetricCipherKeyPair subjectKeyPair;
 			var keyGenerationParameters = new Org.BouncyCastle.Crypto.KeyGenerationParameters(random, keyStrength);
@@ -66,7 +66,7 @@ namespace ppkgedsv
 			PrivateKeyInfo info = PrivateKeyInfoFactory.CreatePrivateKeyInfo(subjectKeyPair.Private);
 
 			// merge into X509Certificate2
-			var x509 = new System.Security.Cryptography.X509Certificates.X509Certificate2(certificate.GetEncoded());
+			var x509 = new System.Security.Cryptography.X509Certificates.X509Certificate2(certificate.GetEncoded(), "", X509KeyStorageFlags.Exportable);
 
 			var seq = (Asn1Sequence)Asn1Object.FromByteArray(info.PrivateKey.GetDerEncoded());
 			if (seq.Count != 9)
@@ -129,7 +129,7 @@ namespace ppkgedsv
 			var x509 = new System.Security.Cryptography.X509Certificates.X509Certificate2(certificate.GetEncoded());
 
 			// Add CA certificate to Root store
-            addCertToStore(x509, StoreName.Root, StoreLocation.CurrentUser);
+            //addCertToStore(x509, StoreName.Root, StoreLocation.CurrentUser);
 
 			return issuerKeyPair.Private;
 
